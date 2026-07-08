@@ -65,7 +65,7 @@ jobs:
             --title "${{ steps.manifest.outputs.tag }}" \
             main.zip \
             dist/manifest.json \
-            "dist/logo.png"
+            "dist/logo.svg"
 
       - name: Set release output
         id: release_result
