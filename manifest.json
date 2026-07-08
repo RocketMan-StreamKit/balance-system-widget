@@ -1,9 +1,9 @@
 {
   "id": "balance-system-widget",
   "name": {
-    "en": "Viewer balance system widget",
-    "ru": "Виджет для системы баланса зрителей",
-    "uk": "Віджет для системи балансу глядачів"
+    "en": "Promo Code Widget for the Viewer Balance System",
+    "ru": "Виджет промокода для Системы баланса зрителей",
+    "uk": "Віджет промокоду для Системи балансу глядачів"
   },
   "description": {
     "en": "Widget for the viewer balance system: shows a random code on stream; Twitch chat users who type it earn balance.",
