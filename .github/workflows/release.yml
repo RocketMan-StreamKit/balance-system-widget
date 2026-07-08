@@ -1,0 +1,78 @@
+name: Release addon
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: addon-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.release_result.outputs.should_release }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build addon
+        run: npm run build
+
+      - name: Read manifest version
+        id: manifest
+        run: |
+          VERSION=$(node -p "require('./manifest.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure release does not exist yet
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${{ steps.manifest.outputs.tag }}" >/dev/null 2>&1; then
+            echo "Release ${{ steps.manifest.outputs.tag }} already exists for version ${{ steps.manifest.outputs.version }}."
+            exit 1
+          fi
+          echo "No existing release for ${{ steps.manifest.outputs.tag }} — proceeding."
+
+      - name: Create main.zip
+        run: |
+          cd dist
+          zip -r ../main.zip .
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.manifest.outputs.tag }}" \
+            --title "${{ steps.manifest.outputs.tag }}" \
+            main.zip \
+            dist/manifest.json \
+            "dist/logo.png"
+
+      - name: Set release output
+        id: release_result
+        run: echo "should_release=true" >> "$GITHUB_OUTPUT"
+
+  sync:
+    name: Sync addon to RocketMan catalog
+    needs: release
+    if: needs.release.outputs.should_release == 'true'
+    uses: ./.github/workflows/rocketman-sync.yml

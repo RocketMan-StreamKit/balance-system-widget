@@ -1,0 +1,34 @@
+{
+  "id": "balance-system-widget",
+  "name": {
+    "en": "Viewer balance system widget",
+    "ru": "Виджет для системы баланса зрителей",
+    "uk": "Віджет для системи балансу глядачів"
+  },
+  "description": {
+    "en": "Widget for the viewer balance system: shows a random code on stream; Twitch chat users who type it earn balance.",
+    "ru": "Виджет для системы баланса зрителей: показывает случайный код на экране; зрители Twitch, написавшие его в чат, получают баланс.",
+    "uk": "Віджет для системи балансу глядачів: показує випадковий код на екрані; глядачі Twitch, які напишуть його в чат, отримують баланс."
+  },
+  "type": "widget",
+  "version": "1.0.0",
+  "author": "RocketMan System",
+  "icon": "logo.svg",
+  "permissions": [
+    "WEB_CONTENT",
+    "WEB_END_POINTS",
+    "SOCKET_END_POINTS",
+    "DASHBOARD_CHAT_INCOMING"
+  ],
+  "app_version": "1.0.25",
+  "depends_on": [
+    "balance-system",
+    "twitch"
+  ],
+  "web": "index.html",
+  "web_type": "widget",
+  "web_contents": [
+    "style.css",
+    "app.js"
+  ]
+}
