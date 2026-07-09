@@ -241,7 +241,11 @@ export const registerWidgetConfig = async (): Promise<void> => {
         type: 'color',
         default: '#000000',
         editor: {
-          label: { en: 'Stroke color', ru: 'Цвет обводки', uk: 'Колір обводки' },
+          label: {
+            en: 'Stroke color',
+            ru: 'Цвет обводки',
+            uk: 'Колір обводки',
+          },
         },
       },
       {
@@ -302,6 +306,44 @@ export const registerWidgetConfig = async (): Promise<void> => {
         },
       },
     ],
+    {
+      key: 'reward_rounding',
+      type: 'select',
+      default: 'integer',
+      options: [
+        {
+          value: 'integer',
+          label: {
+            en: 'Whole number',
+            ru: 'Целое число',
+            uk: 'Ціле число',
+          },
+        },
+        {
+          value: 'tenths',
+          label: {
+            en: 'To tenths',
+            ru: 'До десятых',
+            uk: 'До десятих',
+          },
+        },
+        {
+          value: 'hundredths',
+          label: {
+            en: 'To hundredths',
+            ru: 'До сотых',
+            uk: 'До сотих',
+          },
+        },
+      ],
+      editor: {
+        label: {
+          en: 'Amount rounding',
+          ru: 'Округление суммы',
+          uk: 'Округлення суми',
+        },
+      },
+    },
     {
       key: 'timing_section',
       type: 'info',
@@ -465,4 +507,8 @@ export const registerWidgetConfig = async (): Promise<void> => {
   await GenerateConfig(schema);
 };
 
-export { DEFAULT_SUCCESS_MESSAGE, DEFAULT_TIMEOUT_MESSAGE, DEFAULT_SPECIAL_CHARS };
+export {
+  DEFAULT_SUCCESS_MESSAGE,
+  DEFAULT_TIMEOUT_MESSAGE,
+  DEFAULT_SPECIAL_CHARS,
+};

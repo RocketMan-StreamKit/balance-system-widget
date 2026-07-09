@@ -1,3 +1,5 @@
+export type RewardRounding = 'integer' | 'tenths' | 'hundredths';
+
 export type WidgetParams = {
   enabled?: boolean;
   code_length?: number;
@@ -18,6 +20,7 @@ export type WidgetParams = {
   stroke_width?: number;
   reward_min?: number;
   reward_max?: number;
+  reward_rounding?: RewardRounding;
   interval_min_minutes?: number;
   interval_max_minutes?: number;
   duration_min_seconds?: number;

@@ -2,6 +2,7 @@ import type {
   ChallengePhase,
   CodeDisplayStyle,
   DisplayPayload,
+  RewardRounding,
   WidgetParams,
 } from './types';
 
@@ -191,12 +192,46 @@ const hideCode = async (): Promise<void> => {
 };
 
 /**
+ * Resolves rounding precision factor from settings.
+ * @param rounding - Rounding mode.
+ * @returns Multiplier for rounding (1, 10, or 100).
+ */
+const getRoundingFactor = (rounding: RewardRounding): number => {
+  switch (rounding) {
+    case 'tenths':
+      return 10;
+    case 'hundredths':
+      return 100;
+    default:
+      return 1;
+  }
+};
+
+/**
+ * Rounds reward amount according to settings.
+ * @param amount - Raw amount.
+ * @param rounding - Rounding mode.
+ * @returns Rounded amount.
+ */
+const roundAmount = (amount: number, rounding: RewardRounding): number => {
+  const factor = getRoundingFactor(rounding);
+  return Math.round(amount * factor) / factor;
+};
+
+/**
  * Formats reward amount for chat messages.
  * @param amount - Reward amount.
+ * @param rounding - Rounding mode.
  * @returns Formatted amount string.
  */
-const formatAmount = (amount: number): string => {
-  const rounded = Math.round(amount * 100) / 100;
+const formatAmount = (amount: number, rounding: RewardRounding = 'integer'): string => {
+  const rounded = roundAmount(amount, rounding);
+  if (rounding === 'integer') {
+    return String(rounded);
+  }
+  if (rounding === 'tenths') {
+    return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+  }
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
 };
 
@@ -208,11 +243,11 @@ const formatAmount = (amount: number): string => {
  */
 const formatMessage = (
   template: string,
-  values: { login: string; amount: number; currency: string }
+  values: { login: string; amount: number; currency: string; rounding: RewardRounding }
 ): string => {
   return String(template || '')
     .replace(/\{login\}/g, values.login)
-    .replace(/\{amount\}/g, formatAmount(values.amount))
+    .replace(/\{amount\}/g, formatAmount(values.amount, values.rounding))
     .replace(/\{currency\}/g, values.currency);
 };
 
@@ -304,7 +339,8 @@ const creditViewerBalance = async (input: {
 const pickRewardAmount = (params: WidgetParams): number => {
   const min = Math.max(0.01, Number(params.reward_min) || 1);
   const max = Math.max(min, Number(params.reward_max) || min);
-  return randomBetween(min, max);
+  const rounding = params.reward_rounding || 'integer';
+  return roundAmount(randomBetween(min, max), rounding);
 };
 
 /**
@@ -428,6 +464,7 @@ const handleWinner = async (
       login,
       amount: reward,
       currency,
+      rounding: params.reward_rounding || 'integer',
     });
     await sendTwitchChatMessage(text);
   } else {
