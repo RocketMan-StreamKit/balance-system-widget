@@ -11,7 +11,7 @@
     "uk": "Віджет для системи балансу глядачів: показує випадковий код на екрані; глядачі Twitch, які напишуть його в чат, отримують баланс."
   },
   "type": "widget",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "RocketMan System",
   "icon": "logo.svg",
   "permissions": [
