@@ -33,6 +33,40 @@ const registerSocketEndpoints = async (): Promise<void> => {
   await network.socketEndpoints.create(SOCKET_PATH, 'onDisplaySocket');
 };
 
+events.On('onGetDisplay', async ({ query }) => {
+  if (!isAuthorized(query)) {
+    return { error: 'Unauthorized' };
+  }
+  const state = await getDisplayState();
+  return { ok: true, ...state };
+});
+
+events.On('onDisplaySocket', async (payload) => {
+  if (payload.type === 'connect') {
+    const state = await getDisplayState();
+    await network.socketEndpoints.emit(
+      SOCKET_PATH,
+      'display:update',
+      state,
+      payload.socketId
+    );
+  }
+});
+
+events.On('onShowCodeNow', async () => {
+  const result = await showCodeNow();
+  if (result.success && settings.isOpen && !settings.isNotifyBlocked) {
+    await settings.notify.Send({
+      message: {
+        en: 'Code is now visible on the widget.',
+        ru: 'Код отображён на виджете.',
+        uk: 'Код відображено на віджеті.',
+      },
+    });
+  }
+  return result;
+});
+
 /**
  * Boots endpoints, chat listener, and challenge loop.
  */
@@ -40,46 +74,6 @@ const boot = async (): Promise<void> => {
   await registerWidgetConfig();
   await registerHttpEndpoints();
   await registerSocketEndpoints();
-
-  events.On('onGetDisplay', async ({ query }) => {
-    if (!isAuthorized(query)) {
-      return { error: 'Unauthorized' };
-    }
-    const state = await getDisplayState();
-    return { ok: true, ...state };
-  });
-
-  events.On('onDisplaySocket', async (payload) => {
-    if (payload.type === 'connect') {
-      const state = await getDisplayState();
-      await network.socketEndpoints.emit(
-        SOCKET_PATH,
-        'display:update',
-        state,
-        payload.socketId
-      );
-    }
-  });
-
-  events.On('onShowCodeNow', async () => {
-    const result = await showCodeNow();
-    if (settings.isOpen && !settings.isNotifyBlocked) {
-      await settings.notify.Send({
-        message: result.success
-          ? {
-              en: 'Code is now visible on the widget.',
-              ru: 'Код отображён на виджете.',
-              uk: 'Код відображено на віджеті.',
-            }
-          : {
-              en: 'Enable "Allow other addons to credit balance" in balance-system settings.',
-              ru: 'Включите «Разрешить другим аддонам пополнять баланс» в настройках системы баланса.',
-              uk: 'Увімкніть «Дозволити іншим аддонам поповнювати баланс» у налаштуваннях balance-system.',
-            },
-      });
-    }
-    return result;
-  });
 
   await dashboard.onChatMessage((msg) => {
     void onChatMessage(msg);

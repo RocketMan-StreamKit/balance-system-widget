@@ -393,22 +393,25 @@ const scheduleNextSpawn = async (): Promise<void> => {
 /**
  * Shows a new code on screen and starts the display timer.
  * @param force - Skip the enabled flag (manual trigger from settings).
+ * @returns Whether a code was shown.
  */
-const spawnChallenge = async (force = false): Promise<void> => {
+const spawnChallenge = async (force = false): Promise<boolean> => {
   spawnTimer = null;
   const params = await loadParams();
   if (!force && params.enabled === false) {
     await scheduleNextSpawn();
-    return;
+    return false;
   }
 
-  const allowed = await canCreditBalance();
-  if (!allowed) {
-    console.warn(
-      '[balance-system-widget] external balance credit is disabled in balance-system settings'
-    );
-    await scheduleNextSpawn();
-    return;
+  if (!force) {
+    const allowed = await canCreditBalance();
+    if (!allowed) {
+      console.warn(
+        '[balance-system-widget] external balance credit is disabled in balance-system settings'
+      );
+      await scheduleNextSpawn();
+      return false;
+    }
   }
 
   const code = generateCode(params);
@@ -433,6 +436,8 @@ const spawnChallenge = async (force = false): Promise<void> => {
   expireTimer = setTimeout(() => {
     void handleExpire(session);
   }, durationMs);
+
+  return true;
 };
 
 /**
@@ -591,13 +596,8 @@ export const showCodeNow = async (): Promise<{ success: boolean }> => {
     spawnTimer = null;
   }
 
-  const allowed = await canCreditBalance();
-  if (!allowed) {
-    return { success: false };
-  }
-
-  await spawnChallenge(true);
-  return { success: true };
+  const shown = await spawnChallenge(true);
+  return { success: shown };
 };
 
 /**
