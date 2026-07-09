@@ -1,4 +1,4 @@
-import type { CodeDisplayStyle, DisplayPayload } from './types';
+import type { CodeDisplayStyle, DisplayPayload, TextAnchor } from './types';
 
 declare global {
   interface Window {
@@ -37,6 +37,70 @@ const buildApiUrl = (path: string): string => {
 };
 
 /**
+ * Resolves text anchor from screen quadrant when missing from payload.
+ * @param x - Horizontal position (%).
+ * @param y - Vertical position (%).
+ * @returns Corner anchor for positioning.
+ */
+const resolveAnchor = (x: number, y: number): TextAnchor => {
+  const isRight = x >= 50;
+  const isBottom = y >= 50;
+  if (!isRight && !isBottom) {
+    return 'top-left';
+  }
+  if (isRight && !isBottom) {
+    return 'top-right';
+  }
+  if (!isRight && isBottom) {
+    return 'bottom-left';
+  }
+  return 'bottom-right';
+};
+
+/**
+ * Applies corner-anchored position based on screen quadrant.
+ * @param display - Code display style.
+ */
+const applyAnchorPosition = (display: CodeDisplayStyle): void => {
+  if (!textEl) {
+    return;
+  }
+
+  const anchor = display.anchor ?? resolveAnchor(display.x, display.y);
+  const rotation = `rotate(${display.rotation}deg)`;
+
+  textEl.style.left = '';
+  textEl.style.right = '';
+  textEl.style.top = '';
+  textEl.style.bottom = '';
+
+  switch (anchor) {
+    case 'top-left':
+      textEl.style.left = `${display.x}%`;
+      textEl.style.top = `${display.y}%`;
+      textEl.style.transformOrigin = 'left top';
+      break;
+    case 'top-right':
+      textEl.style.right = `${100 - display.x}%`;
+      textEl.style.top = `${display.y}%`;
+      textEl.style.transformOrigin = 'right top';
+      break;
+    case 'bottom-left':
+      textEl.style.left = `${display.x}%`;
+      textEl.style.bottom = `${100 - display.y}%`;
+      textEl.style.transformOrigin = 'left bottom';
+      break;
+    case 'bottom-right':
+      textEl.style.right = `${100 - display.x}%`;
+      textEl.style.bottom = `${100 - display.y}%`;
+      textEl.style.transformOrigin = 'right bottom';
+      break;
+  }
+
+  textEl.style.transform = rotation;
+};
+
+/**
  * Applies display style to the on-screen code element.
  * @param display - Code display style.
  */
@@ -46,12 +110,10 @@ const renderDisplay = (display: CodeDisplayStyle): void => {
   }
 
   textEl.textContent = display.code;
-  textEl.style.left = `${display.x}%`;
-  textEl.style.top = `${display.y}%`;
+  applyAnchorPosition(display);
   textEl.style.fontSize = `${display.fontSize}px`;
   textEl.style.fontFamily = display.fontFamily;
   textEl.style.color = display.color;
-  textEl.style.transform = `translate(-50%, -50%) rotate(${display.rotation}deg)`;
 
   const strokeWidth = Number(display.strokeWidth) || 0;
   if (strokeWidth > 0) {

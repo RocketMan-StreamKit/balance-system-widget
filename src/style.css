@@ -15,7 +15,6 @@ body {
 
 .code-text {
   position: absolute;
-  transform: translate(-50%, -50%);
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;

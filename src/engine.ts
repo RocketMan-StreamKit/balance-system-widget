@@ -3,6 +3,7 @@ import type {
   CodeDisplayStyle,
   DisplayPayload,
   RewardRounding,
+  TextAnchor,
   WidgetParams,
 } from './types';
 
@@ -123,6 +124,27 @@ const resolveFontFamily = (params: WidgetParams): string => {
 };
 
 /**
+ * Resolves text anchor from screen quadrant (50% split on each axis).
+ * @param x - Horizontal position (%).
+ * @param y - Vertical position (%).
+ * @returns Corner anchor for positioning.
+ */
+const resolveAnchor = (x: number, y: number): TextAnchor => {
+  const isRight = x >= 50;
+  const isBottom = y >= 50;
+  if (!isRight && !isBottom) {
+    return 'top-left';
+  }
+  if (isRight && !isBottom) {
+    return 'top-right';
+  }
+  if (!isRight && isBottom) {
+    return 'bottom-left';
+  }
+  return 'bottom-right';
+};
+
+/**
  * Builds on-screen display style for the current code.
  * @param params - Widget settings.
  * @param code - Active code text.
@@ -132,6 +154,7 @@ const buildDisplayStyle = (params: WidgetParams, code: string): CodeDisplayStyle
   const margin = Math.max(0, Math.min(45, Number(params.margin_min) || 5));
   const x = randomBetween(margin, 100 - margin);
   const y = randomBetween(margin, 100 - margin);
+  const anchor = resolveAnchor(x, y);
   const rotation = randomBetween(
     Number(params.rotation_min) ?? -15,
     Number(params.rotation_max) ?? 15
@@ -145,6 +168,7 @@ const buildDisplayStyle = (params: WidgetParams, code: string): CodeDisplayStyle
     code,
     x,
     y,
+    anchor,
     rotation,
     fontSize,
     fontFamily: resolveFontFamily(params),

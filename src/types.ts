@@ -30,10 +30,13 @@ export type WidgetParams = {
   timeout_message?: string;
 };
 
+export type TextAnchor = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+
 export type CodeDisplayStyle = {
   code: string;
   x: number;
   y: number;
+  anchor: TextAnchor;
   rotation: number;
   fontSize: number;
   fontFamily: string;
