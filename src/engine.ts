@@ -407,9 +407,15 @@ const scheduleNextSpawn = async (): Promise<void> => {
 
   const minMs =
     Math.max(0.1, Number(params.interval_min_minutes) || 5) * 60_000;
-  const maxMs =
-    Math.max(minMs, Number(params.interval_max_minutes) || 10) * 60_000;
-  const delay = randomBetween(minMs, maxMs);
+  const maxMs = Math.max(
+    minMs,
+    Math.max(0.1, Number(params.interval_max_minutes) || 10) * 60_000
+  );
+  // Node clamps delays outside [1, 2^31-1] to 1ms — keep the value in range.
+  const delay = Math.min(
+    Math.max(1, Math.round(randomBetween(minMs, maxMs))),
+    2_147_483_647
+  );
 
   spawnTimer = setTimeout(() => {
     void spawnChallenge();
