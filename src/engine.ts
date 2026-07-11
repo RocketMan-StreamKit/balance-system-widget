@@ -92,7 +92,10 @@ const buildCharset = (params: WidgetParams): string => {
  */
 const generateCode = (params: WidgetParams): string => {
   const charset = buildCharset(params);
-  const length = Math.max(1, Math.min(32, Math.floor(Number(params.code_length) || 4)));
+  const length = Math.max(
+    1,
+    Math.min(32, Math.floor(Number(params.code_length) || 4))
+  );
   let code = '';
   for (let i = 0; i < length; i += 1) {
     const index = random.number(0, charset.length - 1);
@@ -150,14 +153,17 @@ const resolveAnchor = (x: number, y: number): TextAnchor => {
  * @param code - Active code text.
  * @returns Display style payload.
  */
-const buildDisplayStyle = (params: WidgetParams, code: string): CodeDisplayStyle => {
+const buildDisplayStyle = (
+  params: WidgetParams,
+  code: string
+): CodeDisplayStyle => {
   const margin = Math.max(0, Math.min(45, Number(params.margin_min) || 5));
   const x = randomBetween(margin, 100 - margin);
   const y = randomBetween(margin, 100 - margin);
   const anchor = resolveAnchor(x, y);
   const rotation = randomBetween(
-    Number(params.rotation_min) ?? -15,
-    Number(params.rotation_max) ?? 15
+    Number(params.rotation_min ?? -15),
+    Number(params.rotation_max ?? 15)
   );
   const fontSize = randomBetween(
     Number(params.font_size_min) || 48,
@@ -248,7 +254,10 @@ const roundAmount = (amount: number, rounding: RewardRounding): number => {
  * @param rounding - Rounding mode.
  * @returns Formatted amount string.
  */
-const formatAmount = (amount: number, rounding: RewardRounding = 'integer'): string => {
+const formatAmount = (
+  amount: number,
+  rounding: RewardRounding = 'integer'
+): string => {
   const rounded = roundAmount(amount, rounding);
   if (rounding === 'integer') {
     return String(rounded);
@@ -267,7 +276,12 @@ const formatAmount = (amount: number, rounding: RewardRounding = 'integer'): str
  */
 const formatMessage = (
   template: string,
-  values: { login: string; amount: number; currency: string; rounding: RewardRounding }
+  values: {
+    login: string;
+    amount: number;
+    currency: string;
+    rounding: RewardRounding;
+  }
 ): string => {
   return String(template || '')
     .replace(/\{login\}/g, values.login)
@@ -284,12 +298,20 @@ const sendTwitchChatMessage = async (message: string): Promise<void> => {
     return;
   }
   try {
-    const response = await addons.request(TWITCH_ADDON_ID, 'sendChatMessage', { message });
+    const response = await addons.request(TWITCH_ADDON_ID, 'sendChatMessage', {
+      message,
+    });
     if (!response.success) {
-      console.error('[balance-system-widget] sendChatMessage failed:', response.message);
+      console.error(
+        '[balance-system-widget] sendChatMessage failed:',
+        response.message
+      );
     }
   } catch (error) {
-    console.error('[balance-system-widget] failed to send chat message:', error);
+    console.error(
+      '[balance-system-widget] failed to send chat message:',
+      error
+    );
   }
 };
 
@@ -381,8 +403,10 @@ const scheduleNextSpawn = async (): Promise<void> => {
     return;
   }
 
-  const minMs = Math.max(0.1, Number(params.interval_min_minutes) || 5) * 60_000;
-  const maxMs = Math.max(minMs, Number(params.interval_max_minutes) || 10) * 60_000;
+  const minMs =
+    Math.max(0.1, Number(params.interval_min_minutes) || 5) * 60_000;
+  const maxMs =
+    Math.max(minMs, Number(params.interval_max_minutes) || 10) * 60_000;
   const delay = randomBetween(minMs, maxMs);
 
   spawnTimer = setTimeout(() => {
@@ -528,7 +552,9 @@ const normalizeChatText = (text: string, caseSensitive: boolean): string => {
  * Checks whether an incoming chat message matches the active code.
  * @param msg - Incoming chat message.
  */
-export const onChatMessage = async (msg: DashboardChatIncomingPayload): Promise<void> => {
+export const onChatMessage = async (
+  msg: DashboardChatIncomingPayload
+): Promise<void> => {
   if (phase !== 'showing' || !activeCode) {
     return;
   }
@@ -542,7 +568,10 @@ export const onChatMessage = async (msg: DashboardChatIncomingPayload): Promise<
   }
 
   const params = await loadParams();
-  const expected = normalizeChatText(activeCode, Boolean(params.case_sensitive));
+  const expected = normalizeChatText(
+    activeCode,
+    Boolean(params.case_sensitive)
+  );
   const actual = normalizeChatText(
     String(msg.message?.content || ''),
     Boolean(params.case_sensitive)

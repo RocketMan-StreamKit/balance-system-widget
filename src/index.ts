@@ -41,7 +41,7 @@ events.On('onGetDisplay', async ({ query }) => {
   return { ok: true, ...state };
 });
 
-events.On('onDisplaySocket', async (payload) => {
+events.On('onDisplaySocket', async payload => {
   if (payload.type === 'connect') {
     const state = await getDisplayState();
     await network.socketEndpoints.emit(
@@ -75,14 +75,14 @@ const boot = async (): Promise<void> => {
   await registerHttpEndpoints();
   await registerSocketEndpoints();
 
-  await dashboard.onChatMessage((msg) => {
+  await dashboard.onChatMessage(msg => {
     void onChatMessage(msg);
   });
 
   await startChallengeEngine();
 };
 
-void boot().catch((error) => {
+void boot().catch(error => {
   console.error('[balance-system-widget] boot failed:', error);
 });
 

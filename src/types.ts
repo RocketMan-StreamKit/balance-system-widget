@@ -30,7 +30,11 @@ export type WidgetParams = {
   timeout_message?: string;
 };
 
-export type TextAnchor = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+export type TextAnchor =
+  | 'top-left'
+  | 'top-right'
+  | 'bottom-left'
+  | 'bottom-right';
 
 export type CodeDisplayStyle = {
   code: string;
