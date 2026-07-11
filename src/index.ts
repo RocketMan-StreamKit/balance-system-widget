@@ -55,13 +55,19 @@ events.On('onDisplaySocket', async payload => {
 
 events.On('onShowCodeNow', async () => {
   const result = await showCodeNow();
-  if (result.success && settings.isOpen && !settings.isNotifyBlocked) {
+  if (settings.isOpen && !settings.isNotifyBlocked) {
     await settings.notify.Send({
-      message: {
-        en: 'Code is now visible on the widget.',
-        ru: 'Код отображён на виджете.',
-        uk: 'Код відображено на віджеті.',
-      },
+      message: result.success
+        ? {
+            en: 'Code is now visible on the widget.',
+            ru: 'Код отображён на виджете.',
+            uk: 'Код відображено на віджеті.',
+          }
+        : {
+            en: 'Enable the “Allow other add-ons to add to the balance” option in the “Viewer Balance System” app settings.',
+            ru: 'Включите параметр «Разрешить другим аддонам пополнять баланс» в настройках приложения “Система баланса зрителей”.',
+            uk: 'Увімкніть параметр «Дозволити іншим аддонам поповнювати баланс» у налаштуваннях застосунку «Система балансу глядачів».',
+          },
     });
   }
   return result;

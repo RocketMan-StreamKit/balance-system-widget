@@ -617,12 +617,21 @@ export const getDisplayState = async (): Promise<DisplayPayload> => {
 
 /**
  * Shows a code immediately (settings button), cancelling any pending spawn timer.
+ * Requires external balance credit to be enabled in balance-system settings.
  * @returns Whether a code was shown.
+ * @example
+ * const result = await showCodeNow();
+ * // { success: true } when credit is allowed and the code is displayed
  */
 export const showCodeNow = async (): Promise<{ success: boolean }> => {
   if (spawnTimer !== null) {
     clearTimeout(spawnTimer);
     spawnTimer = null;
+  }
+
+  const allowed = await canCreditBalance();
+  if (!allowed) {
+    return { success: false };
   }
 
   const shown = await spawnChallenge(true);
