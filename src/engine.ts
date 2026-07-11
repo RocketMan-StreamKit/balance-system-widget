@@ -182,7 +182,7 @@ const buildDisplayStyle = (
   params: WidgetParams,
   code: string
 ): CodeDisplayStyle => {
-  const marginMin = Math.max(0, Math.min(50, Number(params.margin_min) || 5));
+  const marginMin = Math.max(0, Math.min(50, Number(params.margin_min ?? 5)));
   const marginMax = Math.max(
     marginMin,
     Math.min(50, Number(params.margin_max ?? 50))
