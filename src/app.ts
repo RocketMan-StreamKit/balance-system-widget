@@ -6,7 +6,10 @@ declare global {
       namespace: string,
       options: { path: string }
     ) => {
-      on(event: 'display:update', handler: (payload: DisplayPayload) => void): void;
+      on(
+        event: 'display:update',
+        handler: (payload: DisplayPayload) => void
+      ): void;
       on(event: 'connect_error', handler: (error: Error) => void): void;
     };
   }
@@ -186,7 +189,10 @@ const connectSocket = (): void => {
   });
 
   socket.on('connect_error', (error: Error) => {
-    console.warn('[balance-system-widget] socket connect error:', error.message);
+    console.warn(
+      '[balance-system-widget] socket connect error:',
+      error.message
+    );
   });
 };
 
