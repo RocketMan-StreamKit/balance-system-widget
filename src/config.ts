@@ -1,3 +1,5 @@
+import { canCreditBalance } from './engine';
+
 /** Default success chat message template. */
 const DEFAULT_SUCCESS_MESSAGE =
   '@{login} указал код! На счёт записано {amount} {currency}.';
@@ -8,18 +10,43 @@ const DEFAULT_TIMEOUT_MESSAGE = 'Время вышло — никто не ук�
 /** Default special characters for code generation. */
 const DEFAULT_SPECIAL_CHARS = '!@#$%&*?';
 
+/**
+ * Hint shown when balance-system disallows external credit.
+ */
+export const EXTERNAL_CREDIT_HINT = {
+  en: 'Enable the “Allow other add-ons to add to the balance” option in the “Viewer Balance System” app settings.',
+  ru: 'Включите параметр «Разрешить другим аддонам пополнять баланс» в настройках приложения “Система баланса зрителей”.',
+  uk: 'Увімкніть параметр «Дозволити іншим аддонам поповнювати баланс» у налаштуваннях застосунку «Система балансу глядачів».',
+} as const;
+
 const buttonLabel = {
   en: 'Show code now',
   ru: 'Отобразить код сейчас',
   uk: 'Показати код зараз',
 } as const;
 
+/** Last known external-credit flag used to avoid redundant GenerateConfig calls. */
+let lastShowCreditHint: boolean | null = null;
+
 /**
- * Registers addon settings schema in StreamKit+.
- * @returns {Promise<void>}
+ * Builds the settings schema, optionally with the external-credit warning on top.
+ * @param showCreditHint - Whether to show the credit-permission info block.
+ * @returns Addon settings schema.
+ * @example
+ * buildWidgetSchema(true);
  */
-export const registerWidgetConfig = async (): Promise<void> => {
+const buildWidgetSchema = (showCreditHint: boolean): AddonConfigSchema => {
+  const creditHintField: AddonConfigField = {
+    key: 'external_credit_hint',
+    type: 'info',
+    editor: {
+      description: EXTERNAL_CREDIT_HINT,
+      infoBorder: 'yellow',
+    },
+  };
+
   const schema: AddonConfigSchema = [
+    ...(showCreditHint ? [creditHintField] : []),
     {
       key: 'code_section',
       type: 'info',
@@ -511,7 +538,33 @@ export const registerWidgetConfig = async (): Promise<void> => {
     },
   ];
 
-  await GenerateConfig(schema);
+  return schema;
+};
+
+/**
+ * Applies the settings schema for the current external-credit state.
+ * @param force - Rebuild even when the hint visibility did not change.
+ * @returns {Promise<void>}
+ * @example
+ * await syncWidgetConfig();
+ */
+export const syncWidgetConfig = async (force = false): Promise<void> => {
+  const showCreditHint = !(await canCreditBalance());
+  if (!force && lastShowCreditHint === showCreditHint) {
+    return;
+  }
+  lastShowCreditHint = showCreditHint;
+  await GenerateConfig(buildWidgetSchema(showCreditHint));
+};
+
+/**
+ * Registers addon settings schema in StreamKit+.
+ * @returns {Promise<void>}
+ * @example
+ * await registerWidgetConfig();
+ */
+export const registerWidgetConfig = async (): Promise<void> => {
+  await syncWidgetConfig(true);
 };
 
 export {

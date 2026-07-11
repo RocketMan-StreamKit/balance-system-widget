@@ -1,4 +1,8 @@
-import { registerWidgetConfig } from './config';
+import {
+  EXTERNAL_CREDIT_HINT,
+  registerWidgetConfig,
+  syncWidgetConfig,
+} from './config';
 import {
   SOCKET_PATH,
   getDisplayState,
@@ -9,6 +13,9 @@ import {
 import type { DisplayPayload } from './types';
 
 type QueryRecord = Record<string, string | undefined>;
+
+/** Poll interval for refreshing the credit-permission hint in settings. */
+const CREDIT_HINT_POLL_MS = 1500;
 
 /**
  * Validates frontend access token from query string.
@@ -63,15 +70,31 @@ events.On('onShowCodeNow', async () => {
             ru: 'Код отображён на виджете.',
             uk: 'Код відображено на віджеті.',
           }
-        : {
-            en: 'Enable the “Allow other add-ons to add to the balance” option in the “Viewer Balance System” app settings.',
-            ru: 'Включите параметр «Разрешить другим аддонам пополнять баланс» в настройках приложения “Система баланса зрителей”.',
-            uk: 'Увімкніть параметр «Дозволити іншим аддонам поповнювати баланс» у налаштуваннях застосунку «Система балансу глядачів».',
-          },
+        : EXTERNAL_CREDIT_HINT,
     });
   }
   return result;
 });
+
+/**
+ * Keeps the settings credit hint in sync while the settings window is open.
+ * @example
+ * startCreditHintWatcher();
+ */
+const startCreditHintWatcher = (): void => {
+  let wasOpen = false;
+  setInterval(() => {
+    void (async () => {
+      const isOpen = settings.isOpen;
+      if (isOpen && !wasOpen) {
+        await syncWidgetConfig(true);
+      } else if (isOpen) {
+        await syncWidgetConfig();
+      }
+      wasOpen = isOpen;
+    })();
+  }, CREDIT_HINT_POLL_MS);
+};
 
 /**
  * Boots endpoints, chat listener, and challenge loop.
@@ -80,6 +103,7 @@ const boot = async (): Promise<void> => {
   await registerWidgetConfig();
   await registerHttpEndpoints();
   await registerSocketEndpoints();
+  startCreditHintWatcher();
 
   await dashboard.onChatMessage(msg => {
     void onChatMessage(msg);

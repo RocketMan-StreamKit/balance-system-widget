@@ -333,8 +333,10 @@ const getBalanceCurrency = async (): Promise<string> => {
 /**
  * Checks whether external balance credit is allowed.
  * @returns Whether credit is allowed.
+ * @example
+ * if (await canCreditBalance()) { ... }
  */
-const canCreditBalance = async (): Promise<boolean> => {
+export const canCreditBalance = async (): Promise<boolean> => {
   try {
     const payload = unwrapAddonRpc<{ allowed?: boolean }>(
       await addons.request(BALANCE_ADDON_ID, 'canCreditBalance')
