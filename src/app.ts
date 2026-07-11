@@ -152,6 +152,7 @@ const renderDisplay = (display: CodeDisplayStyle): void => {
 
   innerEl.textContent = display.code;
   innerEl.style.fontSize = `${display.fontSize}px`;
+  innerEl.style.lineHeight = `${display.fontSize * 2}px`;
   innerEl.style.fontFamily = display.fontFamily;
   innerEl.style.color = display.color;
 
