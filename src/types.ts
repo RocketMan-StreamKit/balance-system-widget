@@ -9,6 +9,7 @@ export type WidgetParams = {
   code_special_chars?: string;
   case_sensitive?: boolean;
   margin_min?: number;
+  margin_max?: number;
   rotation_min?: number;
   rotation_max?: number;
   font_size_min?: number;

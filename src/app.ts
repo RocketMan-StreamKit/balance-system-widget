@@ -20,6 +20,7 @@ const SOCKET_PATH = 'display';
 
 const layerEl = document.getElementById('code-layer');
 const textEl = document.getElementById('code-text');
+const innerEl = document.getElementById('code-text-inner');
 
 /**
  * Reads access token from the widget URL query string.
@@ -61,7 +62,31 @@ const resolveAnchor = (x: number, y: number): TextAnchor => {
 };
 
 /**
- * Applies corner-anchored position based on screen quadrant.
+ * Computes the axis-aligned bounding box size of a rotated rectangle.
+ * @param width - Unrotated width in px.
+ * @param height - Unrotated height in px.
+ * @param rotationDeg - Rotation in degrees.
+ * @returns AABB width and height in px.
+ * @example
+ * const box = rotatedAabbSize(200, 40, 15);
+ * // { width: ~203, height: ~90 }
+ */
+const rotatedAabbSize = (
+  width: number,
+  height: number,
+  rotationDeg: number
+): { width: number; height: number } => {
+  const rad = (rotationDeg * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(rad));
+  const sin = Math.abs(Math.sin(rad));
+  return {
+    width: width * cos + height * sin,
+    height: width * sin + height * cos,
+  };
+};
+
+/**
+ * Applies corner-anchored position to the outer code box (no rotation).
  * @param display - Code display style.
  */
 const applyAnchorPosition = (display: CodeDisplayStyle): void => {
@@ -70,7 +95,6 @@ const applyAnchorPosition = (display: CodeDisplayStyle): void => {
   }
 
   const anchor = display.anchor ?? resolveAnchor(display.x, display.y);
-  const rotation = `rotate(${display.rotation}deg)`;
 
   textEl.style.left = '';
   textEl.style.right = '';
@@ -81,26 +105,40 @@ const applyAnchorPosition = (display: CodeDisplayStyle): void => {
     case 'top-left':
       textEl.style.left = `${display.x}%`;
       textEl.style.top = `${display.y}%`;
-      textEl.style.transformOrigin = 'left top';
       break;
     case 'top-right':
       textEl.style.right = `${100 - display.x}%`;
       textEl.style.top = `${display.y}%`;
-      textEl.style.transformOrigin = 'right top';
       break;
     case 'bottom-left':
       textEl.style.left = `${display.x}%`;
       textEl.style.bottom = `${100 - display.y}%`;
-      textEl.style.transformOrigin = 'left bottom';
       break;
     case 'bottom-right':
       textEl.style.right = `${100 - display.x}%`;
       textEl.style.bottom = `${100 - display.y}%`;
-      textEl.style.transformOrigin = 'right bottom';
       break;
   }
+};
 
-  textEl.style.transform = rotation;
+/**
+ * Sizes the outer box to the rotated text AABB and centers the inner span.
+ * @param display - Code display style.
+ */
+const fitOuterToRotatedInner = (display: CodeDisplayStyle): void => {
+  if (!textEl || !innerEl) {
+    return;
+  }
+
+  innerEl.style.transform = 'translate(-50%, -50%)';
+  const strokePad = Math.max(0, Number(display.strokeWidth) || 0) * 2;
+  const rawWidth = innerEl.offsetWidth + strokePad;
+  const rawHeight = innerEl.offsetHeight + strokePad;
+  const box = rotatedAabbSize(rawWidth, rawHeight, display.rotation);
+
+  textEl.style.width = `${box.width}px`;
+  textEl.style.height = `${box.height}px`;
+  innerEl.style.transform = `translate(-50%, -50%) rotate(${display.rotation}deg)`;
 };
 
 /**
@@ -108,25 +146,26 @@ const applyAnchorPosition = (display: CodeDisplayStyle): void => {
  * @param display - Code display style.
  */
 const renderDisplay = (display: CodeDisplayStyle): void => {
-  if (!layerEl || !textEl) {
+  if (!layerEl || !textEl || !innerEl) {
     return;
   }
 
-  textEl.textContent = display.code;
-  applyAnchorPosition(display);
-  textEl.style.fontSize = `${display.fontSize}px`;
-  textEl.style.fontFamily = display.fontFamily;
-  textEl.style.color = display.color;
+  innerEl.textContent = display.code;
+  innerEl.style.fontSize = `${display.fontSize}px`;
+  innerEl.style.fontFamily = display.fontFamily;
+  innerEl.style.color = display.color;
 
   const strokeWidth = Number(display.strokeWidth) || 0;
   if (strokeWidth > 0) {
-    textEl.dataset.stroke = 'on';
-    textEl.style.webkitTextStroke = `${strokeWidth}px ${display.strokeColor}`;
+    innerEl.dataset.stroke = 'on';
+    innerEl.style.webkitTextStroke = `${strokeWidth}px ${display.strokeColor}`;
   } else {
-    textEl.dataset.stroke = 'off';
-    textEl.style.webkitTextStroke = '';
+    innerEl.dataset.stroke = 'off';
+    innerEl.style.webkitTextStroke = '';
   }
 
+  fitOuterToRotatedInner(display);
+  applyAnchorPosition(display);
   layerEl.hidden = false;
 };
 
@@ -137,8 +176,12 @@ const hideDisplay = (): void => {
   if (layerEl) {
     layerEl.hidden = true;
   }
+  if (innerEl) {
+    innerEl.textContent = '';
+  }
   if (textEl) {
-    textEl.textContent = '';
+    textEl.style.width = '';
+    textEl.style.height = '';
   }
 };
 

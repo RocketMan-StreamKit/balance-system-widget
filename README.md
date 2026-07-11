@@ -39,7 +39,7 @@ Install the `dist/` folder in **StreamKit+ → Settings → Widgets**.
 | Group | Options |
 | --- | --- |
 | Code format | Length, letters, digits, special chars, case sensitivity |
-| Appearance | Margin, rotation, font size range, font, colors, stroke |
+| Appearance | Edge margin range (min/max %), rotation, font size range, font, colors, stroke |
 | Reward | Random amount range, rounding (whole / tenths / hundredths) |
 | Timing | Spawn interval (minutes), display duration (seconds) |
 | Chat | Success / timeout message templates |

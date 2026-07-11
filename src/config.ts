@@ -151,9 +151,24 @@ const buildWidgetSchema = (showCreditHint: boolean): AddonConfigSchema => {
             ru: 'Мин. отступ от края (%)',
             uk: 'Мін. відступ від краю (%)',
           },
-          validation: { min: 0, max: 45 },
+          validation: { min: 0, max: 50 },
         },
       },
+      {
+        key: 'margin_max',
+        type: 'number',
+        default: 50,
+        editor: {
+          label: {
+            en: 'Max edge margin (%)',
+            ru: 'Макс. отступ от края (%)',
+            uk: 'Макс. відступ від краю (%)',
+          },
+          validation: { min: 0, max: 50 },
+        },
+      },
+    ],
+    [
       {
         key: 'rotation_min',
         type: 'number',

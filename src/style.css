@@ -15,13 +15,22 @@ body {
 
 .code-text {
   position: absolute;
+  line-height: 0;
+  overflow: visible;
+}
+
+.code-text-inner {
+  position: absolute;
+  left: 50%;
+  top: 50%;
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
   user-select: none;
   text-shadow: none;
+  transform-origin: center center;
 }
 
-.code-text[data-stroke='on'] {
+.code-text-inner[data-stroke='on'] {
   paint-order: stroke fill;
 }

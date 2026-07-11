@@ -148,6 +148,31 @@ const resolveAnchor = (x: number, y: number): TextAnchor => {
 };
 
 /**
+ * Picks a screen coordinate (%) within the min/max edge-margin band.
+ * Zones: `[min, max]` and `[100-max, 100-min]`; when max is 50 they merge into `[min, 100-min]`.
+ * @param minMargin - Minimum distance from the edge (0–50).
+ * @param maxMargin - Maximum distance from the edge (0–50; 50 = center).
+ * @returns Coordinate in percent.
+ * @example
+ * randomCoordInMarginBand(5, 50); // anywhere in [5, 95]
+ * randomCoordInMarginBand(5, 20); // near edges: [5, 20] or [80, 95]
+ */
+const randomCoordInMarginBand = (
+  minMargin: number,
+  maxMargin: number
+): number => {
+  const lo = Math.max(0, Math.min(50, minMargin));
+  const hi = Math.max(lo, Math.min(50, maxMargin));
+  if (hi >= 50) {
+    return randomBetween(lo, 100 - lo);
+  }
+  if (random.number(0, 1) === 0) {
+    return randomBetween(lo, hi);
+  }
+  return randomBetween(100 - hi, 100 - lo);
+};
+
+/**
  * Builds on-screen display style for the current code.
  * @param params - Widget settings.
  * @param code - Active code text.
@@ -157,9 +182,13 @@ const buildDisplayStyle = (
   params: WidgetParams,
   code: string
 ): CodeDisplayStyle => {
-  const margin = Math.max(0, Math.min(45, Number(params.margin_min) || 5));
-  const x = randomBetween(margin, 100 - margin);
-  const y = randomBetween(margin, 100 - margin);
+  const marginMin = Math.max(0, Math.min(50, Number(params.margin_min) || 5));
+  const marginMax = Math.max(
+    marginMin,
+    Math.min(50, Number(params.margin_max ?? 50))
+  );
+  const x = randomCoordInMarginBand(marginMin, marginMax);
+  const y = randomCoordInMarginBand(marginMin, marginMax);
   const anchor = resolveAnchor(x, y);
   const rotation = randomBetween(
     Number(params.rotation_min ?? -15),
