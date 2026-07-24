@@ -34,10 +34,13 @@ const unwrapAddonRpc = <T>(response: AddonRpcEnvelope): T | null => {
 let phase: ChallengePhase = 'idle';
 let activeCode: string | null = null;
 let activeSession = 0;
+/** Shared timeout for the next automatic code spawn (reset on every show). */
 let spawnTimer: ReturnType<typeof setTimeout> | null = null;
 let expireTimer: ReturnType<typeof setTimeout> | null = null;
 let currentReward: number | null = null;
 let currentDisplay: CodeDisplayStyle | null = null;
+/** Wall-clock timestamp of the last code show (or addon start). */
+let lastCodeShowAt = 0;
 
 /**
  * Reads addon settings from persisted params.
@@ -292,13 +295,22 @@ const pushDisplay = async (payload: DisplayPayload): Promise<void> => {
 };
 
 /**
- * Clears scheduled timers.
+ * Clears the shared spawn timeout if one is pending.
+ * @example
+ * clearSpawnTimer();
  */
-const clearTimers = (): void => {
+const clearSpawnTimer = (): void => {
   if (spawnTimer !== null) {
     clearTimeout(spawnTimer);
     spawnTimer = null;
   }
+};
+
+/**
+ * Clears scheduled timers.
+ */
+const clearTimers = (): void => {
+  clearSpawnTimer();
   if (expireTimer !== null) {
     clearTimeout(expireTimer);
     expireTimer = null;
@@ -491,13 +503,14 @@ const pickRewardAmount = (params: WidgetParams): number => {
 };
 
 /**
- * Schedules the next code appearance after a random interval.
+ * Schedules the next automatic code appearance after a random interval
+ * measured from `lastCodeShowAt`. Replaces any pending spawn timeout.
+ * @example
+ * lastCodeShowAt = Date.now();
+ * await scheduleNextSpawn();
  */
 const scheduleNextSpawn = async (): Promise<void> => {
-  if (spawnTimer !== null) {
-    clearTimeout(spawnTimer);
-    spawnTimer = null;
-  }
+  clearSpawnTimer();
 
   const params = await loadParams();
   if (params.enabled === false) {
@@ -511,25 +524,49 @@ const scheduleNextSpawn = async (): Promise<void> => {
     Math.max(0.1, Number(params.interval_max_minutes) || 10) * 60_000
   );
   // Node clamps delays outside [1, 2^31-1] to 1ms — keep the value in range.
-  const delay = Math.min(
+  const intervalMs = Math.min(
     Math.max(1, Math.round(randomBetween(minMs, maxMs))),
+    2_147_483_647
+  );
+  const origin = lastCodeShowAt > 0 ? lastCodeShowAt : Date.now();
+  const delay = Math.min(
+    Math.max(1, origin + intervalMs - Date.now()),
     2_147_483_647
   );
 
   spawnTimer = setTimeout(() => {
+    spawnTimer = null;
     void spawnChallenge();
   }, delay);
 };
 
 /**
+ * Records the show timestamp and arms a new shared spawn timeout.
+ * Called after every successful code display (auto or manual).
+ * @example
+ * await rescheduleAfterShow();
+ */
+const rescheduleAfterShow = async (): Promise<void> => {
+  lastCodeShowAt = Date.now();
+  await scheduleNextSpawn();
+};
+
+/**
  * Shows a new code on screen and starts the display timer.
+ * On success, records the show time and resets the shared spawn timeout
+ * so the next code appears after a fresh random interval from this show.
  * @param force - Skip the enabled flag (manual trigger from settings).
  * @returns Whether a code was shown.
+ * @example
+ * await spawnChallenge(); // automatic
+ * await spawnChallenge(true); // manual
  */
 const spawnChallenge = async (force = false): Promise<boolean> => {
-  spawnTimer = null;
+  clearSpawnTimer();
   const params = await loadParams();
   if (!force && params.enabled === false) {
+    // Failed attempt: shift origin so the next wait is a full interval from now.
+    lastCodeShowAt = Date.now();
     await scheduleNextSpawn();
     return false;
   }
@@ -540,6 +577,7 @@ const spawnChallenge = async (force = false): Promise<boolean> => {
       console.warn(
         '[balance-system-widget] external balance credit is disabled in balance-system settings'
       );
+      lastCodeShowAt = Date.now();
       await scheduleNextSpawn();
       return false;
     }
@@ -568,11 +606,16 @@ const spawnChallenge = async (force = false): Promise<boolean> => {
     void handleExpire(session);
   }, durationMs);
 
+  // Interval is measured between shows, not between hide → next show.
+  await rescheduleAfterShow();
+
   return true;
 };
 
 /**
  * Handles display timeout when nobody typed the code.
+ * Does not touch the spawn timeout — the next show was already scheduled
+ * when this code appeared.
  * @param session - Spawn session id.
  */
 const handleExpire = async (session: number): Promise<void> => {
@@ -587,12 +630,12 @@ const handleExpire = async (session: number): Promise<void> => {
   if (params.send_timeout_message) {
     await sendTwitchChatMessage(String(params.timeout_message || ''));
   }
-
-  await scheduleNextSpawn();
 };
 
 /**
  * Handles a successful code match from Twitch chat.
+ * Does not touch the spawn timeout — the next show was already scheduled
+ * when this code appeared.
  * @param msg - Incoming chat message.
  * @param reward - Pre-selected reward amount.
  * @param matchedCode - Code that was matched.
@@ -602,10 +645,8 @@ const handleWinner = async (
   reward: number,
   matchedCode: string
 ): Promise<void> => {
-  const session = activeSession;
   const login = String(msg.user?.name || '').trim();
   if (!login) {
-    await scheduleNextSpawn();
     return;
   }
 
@@ -637,10 +678,6 @@ const handleWinner = async (
     await sendTwitchChatMessage(
       `@${login} указал код, но пополнение баланса не удалось.`
     );
-  }
-
-  if (session === activeSession) {
-    await scheduleNextSpawn();
   }
 };
 
@@ -723,7 +760,9 @@ export const getDisplayState = async (): Promise<DisplayPayload> => {
 };
 
 /**
- * Shows a code immediately (settings button), cancelling any pending spawn timer.
+ * Shows a code immediately (settings button).
+ * Clears the shared spawn timeout; on success `spawnChallenge` records the
+ * show time and arms a new timeout for the next automatic appearance.
  * Requires external balance credit to be enabled in balance-system settings.
  * @returns Whether a code was shown.
  * @example
@@ -731,10 +770,7 @@ export const getDisplayState = async (): Promise<DisplayPayload> => {
  * // { success: true } when credit is allowed and the code is displayed
  */
 export const showCodeNow = async (): Promise<{ success: boolean }> => {
-  if (spawnTimer !== null) {
-    clearTimeout(spawnTimer);
-    spawnTimer = null;
-  }
+  clearSpawnTimer();
 
   const allowed = await canCreditBalance();
   if (!allowed) {
@@ -747,6 +783,9 @@ export const showCodeNow = async (): Promise<{ success: boolean }> => {
 
 /**
  * Starts the challenge engine and chat listener.
+ * Treats addon start as the interval origin, then schedules the first show.
+ * @example
+ * await startChallengeEngine();
  */
 export const startChallengeEngine = async (): Promise<void> => {
   clearTimers();
@@ -755,6 +794,7 @@ export const startChallengeEngine = async (): Promise<void> => {
   activeSession = 0;
   currentReward = null;
   currentDisplay = null;
+  lastCodeShowAt = Date.now();
   await pushDisplay({ visible: false, display: null });
   await scheduleNextSpawn();
 };
