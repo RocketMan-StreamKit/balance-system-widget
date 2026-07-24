@@ -1,6 +1,6 @@
 {
   "name": "rocketman-streamkit-balance-system-widget",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "private": true,
   "description": "Widget for the viewer balance system — random on-screen codes rewarded via Twitch chat.",
   "scripts": {
