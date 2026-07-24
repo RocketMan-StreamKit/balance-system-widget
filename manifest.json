@@ -20,7 +20,7 @@
     "SOCKET_END_POINTS",
     "DASHBOARD_CHAT_INCOMING"
   ],
-  "app_version": "1.0.25",
+  "app_version": "1.0.48",
   "depends_on": [
     "balance-system",
     "twitch"
