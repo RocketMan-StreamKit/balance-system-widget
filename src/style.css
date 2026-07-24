@@ -35,11 +35,8 @@ body {
 
 .code-above-text {
   display: block;
-  width: 100%;
   text-align: left;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  white-space: pre;
   line-height: 1.2;
 }
 

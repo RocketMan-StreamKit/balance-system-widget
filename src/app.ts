@@ -152,12 +152,13 @@ const renderDisplay = (display: CodeDisplayStyle): void => {
     return;
   }
 
-  const aboveText = String(display.aboveText ?? '').trim();
+  const aboveText = String(display.aboveText ?? '');
   const multiplier =
     Number.isFinite(display.aboveTextSizeMultiplier) &&
     display.aboveTextSizeMultiplier > 0
       ? display.aboveTextSizeMultiplier
       : 0.5;
+  const align = display.aboveTextAlign ?? 'left';
 
   valueEl.textContent = display.code;
   valueEl.style.fontSize = `${display.fontSize}px`;
@@ -165,27 +166,32 @@ const renderDisplay = (display: CodeDisplayStyle): void => {
 
   innerEl.style.fontFamily = display.fontFamily;
   innerEl.style.color = display.color;
-  // Reset width so the promo code can be measured without wrap constraints.
   innerEl.style.width = '';
+  innerEl.style.alignItems =
+    align === 'center'
+      ? 'center'
+      : align === 'right'
+        ? 'flex-end'
+        : 'flex-start';
+  aboveEl.style.width = '';
   aboveEl.style.maxWidth = '';
-
-  const codeWidth = Math.max(valueEl.offsetWidth, 1);
 
   if (aboveText) {
     aboveEl.hidden = false;
     aboveEl.textContent = aboveText;
     aboveEl.style.fontSize = `${display.fontSize * multiplier}px`;
-    aboveEl.style.textAlign = display.aboveTextAlign ?? 'left';
+    aboveEl.style.textAlign = align;
     aboveEl.style.marginBottom = `${display.aboveTextMarginBottom ?? 0}px`;
-    // Caption wraps within the promo-code width inside code-text-inner.
-    aboveEl.style.maxWidth = `${codeWidth}px`;
-    innerEl.style.width = `${codeWidth}px`;
+    const blockWidth = Math.max(valueEl.offsetWidth, aboveEl.offsetWidth, 1);
+    innerEl.style.width = `${blockWidth}px`;
+    aboveEl.style.width = '100%';
   } else {
     aboveEl.hidden = true;
     aboveEl.textContent = '';
     aboveEl.style.fontSize = '';
     aboveEl.style.textAlign = '';
     aboveEl.style.marginBottom = '';
+    aboveEl.style.width = '';
   }
 
   const strokeWidth = Number(display.strokeWidth) || 0;
@@ -216,6 +222,7 @@ const hideDisplay = (): void => {
     aboveEl.style.maxWidth = '';
     aboveEl.style.textAlign = '';
     aboveEl.style.marginBottom = '';
+    aboveEl.style.width = '';
   }
   if (valueEl) {
     valueEl.textContent = '';
@@ -224,6 +231,7 @@ const hideDisplay = (): void => {
   }
   if (innerEl) {
     innerEl.style.width = '';
+    innerEl.style.alignItems = '';
     innerEl.style.webkitTextStroke = '';
     innerEl.dataset.stroke = 'off';
   }

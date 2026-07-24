@@ -321,9 +321,9 @@ const buildWidgetSchema = (showCreditHint: boolean): AddonConfigSchema => {
           uk: 'Текст над промокодом',
         },
         description: {
-          en: 'Shown above the promo code when set. Leave empty to hide.',
-          ru: 'Выводится над промокодом, если указан. Оставьте пустым, чтобы скрыть.',
-          uk: 'Виводиться над промокодом, якщо вказано. Залиште порожнім, щоб приховати.',
+          en: 'Shown above the promo code when set. Leave empty to hide. To break a line, type \\n (for example: Line 1\\nLine 2). Automatic wrapping is disabled.',
+          ru: 'Выводится над промокодом, если указан. Оставьте пустым, чтобы скрыть. Для переноса строки введите \\n (например: Строка 1\\nСтрока 2). Автоматический перенос отключён.',
+          uk: 'Виводиться над промокодом, якщо вказано. Залиште порожнім, щоб приховати. Для перенесення рядка введіть \\n (наприклад: Рядок 1\\nРядок 2). Автоматичне перенесення вимкнено.',
         },
       },
     },

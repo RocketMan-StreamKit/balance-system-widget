@@ -128,6 +128,22 @@ const resolveFontFamily = (params: WidgetParams): string => {
 };
 
 /**
+ * Normalizes the above-code caption: turns literal `\n` into real newlines.
+ * Soft wrapping is disabled in CSS; only these newlines create line breaks.
+ * @param raw - Raw caption from settings.
+ * @returns Caption ready for display.
+ * @example
+ * normalizeAboveText('Hello\\nWorld'); // "Hello\nWorld"
+ */
+const normalizeAboveText = (raw: string): string => {
+  return String(raw ?? '')
+    .replace(/\\n/g, '\n')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .trim();
+};
+
+/**
  * Parses the above-text font-size multiplier from settings.
  * Falls back to `0.5` (half the promo-code size) when missing or invalid.
  * @param params - Widget settings.
@@ -250,7 +266,7 @@ const buildDisplayStyle = (
 
   return {
     code,
-    aboveText: String(params.code_above_text ?? '').trim(),
+    aboveText: normalizeAboveText(String(params.code_above_text ?? '')),
     aboveTextSizeMultiplier: resolveAboveTextSizeMultiplier(params),
     aboveTextAlign: resolveAboveTextAlign(params),
     aboveTextMarginBottom: resolveAboveTextMarginBottom(params),
