@@ -19,6 +19,10 @@ export type WidgetParams = {
   text_color?: string;
   stroke_color?: string;
   stroke_width?: number;
+  /**
+   * When enabled, each code character is masked and briefly revealed one at a time.
+   */
+  secret_mode?: boolean;
   /** Optional caption shown above the promo code. */
   code_above_text?: string;
   /**
@@ -72,6 +76,10 @@ export type CodeDisplayStyle = {
   color: string;
   strokeColor: string;
   strokeWidth: number;
+  /**
+   * When true, the widget masks each character and briefly reveals them one by one.
+   */
+  secretMode: boolean;
 };
 
 export type DisplayPayload = {

@@ -279,6 +279,7 @@ const buildDisplayStyle = (
     color: String(params.text_color || '#ffffff'),
     strokeColor: String(params.stroke_color || '#000000'),
     strokeWidth: Math.max(0, Number(params.stroke_width) || 0),
+    secretMode: params.secret_mode === true,
   };
 };
 

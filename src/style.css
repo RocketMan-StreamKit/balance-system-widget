@@ -46,6 +46,19 @@ body {
   line-height: 2;
 }
 
+.code-value--secret {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+
+.code-char {
+  display: inline-block;
+  box-sizing: content-box;
+  line-height: 1;
+  white-space: pre;
+}
+
 .code-text-inner[data-stroke='on'] {
   paint-order: stroke fill;
 }

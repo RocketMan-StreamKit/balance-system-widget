@@ -24,6 +24,28 @@ const innerEl = document.getElementById('code-text-inner');
 const aboveEl = document.getElementById('code-above-text');
 const valueEl = document.getElementById('code-value');
 
+/** How long a revealed character stays visible in secret mode (ms). */
+const SECRET_REVEAL_MS = 2000;
+/** Pause while all characters stay masked between reveals (ms). */
+const SECRET_GAP_MS = 3500;
+
+/** Timeout id for the pause between secret-mode reveals. */
+let secretGapTimer: number | null = null;
+/** Timeout id for hiding the currently revealed character. */
+let secretHideTimer: number | null = null;
+/** Character index order for the current secret-mode pass. */
+let secretRevealOrder: number[] = [];
+/** Next position in `secretRevealOrder` to reveal. */
+let secretRevealCursor = 0;
+/** Text color used for secret-mode mask backgrounds. */
+let secretTextColor = '#ffffff';
+/** Stroke color used for secret-mode mask borders. */
+let secretStrokeColor = '#000000';
+/** Stroke width (px) mirrored as CSS border on hidden secret-mode characters. */
+let secretStrokeWidth = 0;
+/** Key of the last fully applied display payload (avoids restarting animation on poll). */
+let renderedDisplayKey: string | null = null;
+
 /**
  * Reads access token from the widget URL query string.
  * @returns Access token.
@@ -144,6 +166,172 @@ const fitOuterToRotatedInner = (display: CodeDisplayStyle): void => {
 };
 
 /**
+ * Builds a stable key for a display payload to skip redundant re-renders.
+ * @param display - Code display style.
+ * @returns Serialization used for equality checks.
+ * @example
+ * displayKey({ code: 'AB', secretMode: true, x: 10, y: 20, ... });
+ */
+const displayKey = (display: CodeDisplayStyle): string => {
+  return [
+    display.code,
+    display.secretMode ? '1' : '0',
+    display.aboveText,
+    display.aboveTextSizeMultiplier,
+    display.aboveTextAlign,
+    display.aboveTextMarginBottom,
+    display.x,
+    display.y,
+    display.anchor,
+    display.rotation,
+    display.fontSize,
+    display.fontFamily,
+    display.color,
+    display.strokeColor,
+    display.strokeWidth,
+  ].join('|');
+};
+
+/**
+ * Clears all pending secret-mode reveal timers.
+ * @example
+ * stopSecretMode();
+ */
+const stopSecretMode = (): void => {
+  if (secretGapTimer !== null) {
+    window.clearTimeout(secretGapTimer);
+    secretGapTimer = null;
+  }
+  if (secretHideTimer !== null) {
+    window.clearTimeout(secretHideTimer);
+    secretHideTimer = null;
+  }
+  secretRevealOrder = [];
+  secretRevealCursor = 0;
+};
+
+/**
+ * Shuffles character indices into a new random reveal order (Fisher–Yates).
+ * @param length - Number of characters in the code.
+ * @returns Permutation of `0..length-1`.
+ * @example
+ * shuffleIndices(4); // e.g. [2, 0, 3, 1]
+ */
+const shuffleIndices = (length: number): number[] => {
+  const indices = Array.from({ length }, (_, index) => index);
+  for (let i = indices.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const left = indices[i] as number;
+    const right = indices[j] as number;
+    indices[i] = right;
+    indices[j] = left;
+  }
+  return indices;
+};
+
+/**
+ * Sets whether a secret-mode character shows its glyph or a masked box.
+ * Hidden state uses the character's natural width with background + border
+ * (matching text color / stroke); revealed state restores text stroke.
+ * @param charEl - Character span element.
+ * @param revealed - When true, the glyph is visible; otherwise it is masked.
+ * @example
+ * setCharRevealed(charEl, true);
+ */
+const setCharRevealed = (charEl: HTMLElement, revealed: boolean): void => {
+  charEl.dataset.revealed = revealed ? 'true' : 'false';
+  const borderWidth = Math.max(0, secretStrokeWidth);
+
+  if (revealed) {
+    charEl.style.color = '';
+    charEl.style.background = '';
+    charEl.style.webkitTextStroke = '';
+    // Keep transparent border so layout does not jump when toggling the mask.
+    charEl.style.border =
+      borderWidth > 0 ? `${borderWidth}px solid transparent` : '';
+    return;
+  }
+
+  charEl.style.color = 'transparent';
+  charEl.style.background = secretTextColor;
+  charEl.style.webkitTextStroke = '0';
+  charEl.style.border =
+    borderWidth > 0 ? `${borderWidth}px solid ${secretStrokeColor}` : 'none';
+};
+
+/**
+ * Schedules the next secret-mode reveal cycle for the current code.
+ * @example
+ * scheduleNextSecretReveal();
+ */
+const scheduleNextSecretReveal = (): void => {
+  if (!valueEl) {
+    return;
+  }
+
+  secretGapTimer = window.setTimeout(() => {
+    secretGapTimer = null;
+    const charEls = valueEl.querySelectorAll<HTMLElement>('.code-char');
+    if (charEls.length === 0) {
+      return;
+    }
+
+    if (secretRevealCursor >= secretRevealOrder.length) {
+      secretRevealOrder = shuffleIndices(charEls.length);
+      secretRevealCursor = 0;
+    }
+
+    const index = secretRevealOrder[secretRevealCursor] as number;
+    secretRevealCursor += 1;
+    const charEl = charEls[index];
+    if (!charEl) {
+      scheduleNextSecretReveal();
+      return;
+    }
+
+    setCharRevealed(charEl, true);
+
+    secretHideTimer = window.setTimeout(() => {
+      secretHideTimer = null;
+      setCharRevealed(charEl, false);
+      scheduleNextSecretReveal();
+    }, SECRET_REVEAL_MS);
+  }, SECRET_GAP_MS);
+};
+
+/**
+ * Builds per-character spans and starts the secret reveal loop.
+ * @param display - Active display style (code, colors, stroke).
+ * @example
+ * startSecretMode(display);
+ */
+const startSecretMode = (display: CodeDisplayStyle): void => {
+  if (!valueEl) {
+    return;
+  }
+
+  stopSecretMode();
+  secretTextColor = display.color;
+  secretStrokeColor = display.strokeColor;
+  secretStrokeWidth = Math.max(0, Number(display.strokeWidth) || 0);
+
+  valueEl.textContent = '';
+  valueEl.classList.add('code-value--secret');
+
+  for (const char of display.code) {
+    const charEl = document.createElement('span');
+    charEl.className = 'code-char';
+    charEl.textContent = char;
+    setCharRevealed(charEl, false);
+    valueEl.appendChild(charEl);
+  }
+
+  secretRevealOrder = shuffleIndices(display.code.length);
+  secretRevealCursor = 0;
+  scheduleNextSecretReveal();
+};
+
+/**
  * Applies display style to the on-screen code element.
  * @param display - Code display style.
  */
@@ -159,10 +347,18 @@ const renderDisplay = (display: CodeDisplayStyle): void => {
       ? display.aboveTextSizeMultiplier
       : 0.5;
   const align = display.aboveTextAlign ?? 'left';
+  const secretMode = display.secretMode === true;
 
-  valueEl.textContent = display.code;
   valueEl.style.fontSize = `${display.fontSize}px`;
   valueEl.style.lineHeight = `${display.fontSize * 2}px`;
+
+  if (secretMode) {
+    startSecretMode(display);
+  } else {
+    stopSecretMode();
+    valueEl.classList.remove('code-value--secret');
+    valueEl.textContent = display.code;
+  }
 
   innerEl.style.fontFamily = display.fontFamily;
   innerEl.style.color = display.color;
@@ -212,6 +408,8 @@ const renderDisplay = (display: CodeDisplayStyle): void => {
  * Hides the code from the screen.
  */
 const hideDisplay = (): void => {
+  stopSecretMode();
+  renderedDisplayKey = null;
   if (layerEl) {
     layerEl.hidden = true;
   }
@@ -225,6 +423,7 @@ const hideDisplay = (): void => {
     aboveEl.style.width = '';
   }
   if (valueEl) {
+    valueEl.classList.remove('code-value--secret');
     valueEl.textContent = '';
     valueEl.style.fontSize = '';
     valueEl.style.lineHeight = '';
@@ -247,6 +446,11 @@ const hideDisplay = (): void => {
  */
 const applyPayload = (payload: DisplayPayload): void => {
   if (payload.visible && payload.display) {
+    const key = displayKey(payload.display);
+    if (key === renderedDisplayKey) {
+      return;
+    }
+    renderedDisplayKey = key;
     renderDisplay(payload.display);
     return;
   }

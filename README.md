@@ -12,6 +12,7 @@ StreamKit+ widget addon for the **[viewer balance system](https://github.com/Roc
 - Random code on screen (length, charset: letters / digits / special symbols)
 - Random position, rotation, and font size within configured ranges
 - Text color and optional stroke
+- Optional **secret mode**: each character is masked by a text-colored square and briefly revealed one at a time in random order
 - Optional caption above the promo code (relative font-size and alignment)
 - Listens to **Twitch** chat via StreamKit+ dashboard API
 - Credits balance through `balance-system` RPC (`creditBalance`)
@@ -40,7 +41,7 @@ Install the `dist/` folder in **StreamKit+ → Settings → Widgets**.
 | Group | Options |
 | --- | --- |
 | Code format | Length, letters, digits, special chars, case sensitivity |
-| Appearance | Edge margin range (min/max %), rotation, font size range, font, colors, stroke, optional text above the promo code (relative font size, alignment, bottom margin) |
+| Appearance | Edge margin range (min/max %), rotation, font size range, font, colors, stroke, secret mode, optional text above the promo code (relative font size, alignment, bottom margin) |
 | Reward | Random amount range, rounding (whole / tenths / hundredths) |
 | Timing | Spawn interval (minutes), display duration (seconds) |
 | Chat | Success / timeout message templates |

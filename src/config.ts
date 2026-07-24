@@ -311,6 +311,23 @@ const buildWidgetSchema = (showCreditHint: boolean): AddonConfigSchema => {
       },
     ],
     {
+      key: 'secret_mode',
+      type: 'boolean',
+      default: false,
+      editor: {
+        label: {
+          en: 'Secret mode',
+          ru: 'Секретный режим',
+          uk: 'Секретний режим',
+        },
+        description: {
+          en: 'Hides each code character behind a square of the text color. Every few seconds one character is revealed for a couple of seconds (random order, no repeats until all have been shown), then hidden again — until the timer ends or someone enters the correct code.',
+          ru: 'Скрывает каждый символ кода квадратом цвета текста. Раз в несколько секунд на пару секунд один символ становится видимым (в случайном порядке, без повторов, пока не отобразятся все), затем снова прячется — до конца таймера или пока кто-то не введёт верный код.',
+          uk: 'Приховує кожен символ коду квадратом кольору тексту. Раз на кілька секунд на пару секунд один символ стає видимим (у випадковому порядку, без повторів, доки не відобразяться всі), потім знову ховається — до кінця таймера або поки хтось не введе правильний код.',
+        },
+      },
+    },
+    {
       key: 'code_above_text',
       type: 'text',
       default: '',
