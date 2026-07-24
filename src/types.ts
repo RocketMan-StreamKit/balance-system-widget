@@ -19,6 +19,17 @@ export type WidgetParams = {
   text_color?: string;
   stroke_color?: string;
   stroke_width?: number;
+  /** Optional caption shown above the promo code. */
+  code_above_text?: string;
+  /**
+   * Font-size multiplier for the above-code caption relative to the promo code.
+   * Stored as a string select value (e.g. `"0.5"`).
+   */
+  code_above_text_size?: string;
+  /** Horizontal alignment of the above-code caption (`left` | `center` | `right`). */
+  code_above_text_align?: string;
+  /** Bottom margin (px) between the above-code caption and the promo code. */
+  code_above_text_margin?: number;
   reward_min?: number;
   reward_max?: number;
   reward_rounding?: RewardRounding;
@@ -37,8 +48,21 @@ export type TextAnchor =
   | 'bottom-left'
   | 'bottom-right';
 
+export type TextAlign = 'left' | 'center' | 'right';
+
 export type CodeDisplayStyle = {
   code: string;
+  /** Optional caption rendered above the promo code. */
+  aboveText: string;
+  /**
+   * Font-size multiplier for `aboveText` relative to `fontSize`.
+   * @example 0.5 means half the promo-code font size.
+   */
+  aboveTextSizeMultiplier: number;
+  /** Horizontal alignment of the above-code caption. */
+  aboveTextAlign: TextAlign;
+  /** Bottom margin in px between the caption and the promo code. */
+  aboveTextMarginBottom: number;
   x: number;
   y: number;
   anchor: TextAnchor;

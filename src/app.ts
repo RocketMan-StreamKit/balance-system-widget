@@ -21,6 +21,8 @@ const SOCKET_PATH = 'display';
 const layerEl = document.getElementById('code-layer');
 const textEl = document.getElementById('code-text');
 const innerEl = document.getElementById('code-text-inner');
+const aboveEl = document.getElementById('code-above-text');
+const valueEl = document.getElementById('code-value');
 
 /**
  * Reads access token from the widget URL query string.
@@ -146,15 +148,45 @@ const fitOuterToRotatedInner = (display: CodeDisplayStyle): void => {
  * @param display - Code display style.
  */
 const renderDisplay = (display: CodeDisplayStyle): void => {
-  if (!layerEl || !textEl || !innerEl) {
+  if (!layerEl || !textEl || !innerEl || !aboveEl || !valueEl) {
     return;
   }
 
-  innerEl.textContent = display.code;
-  innerEl.style.fontSize = `${display.fontSize}px`;
-  innerEl.style.lineHeight = `${display.fontSize * 2}px`;
+  const aboveText = String(display.aboveText ?? '').trim();
+  const multiplier =
+    Number.isFinite(display.aboveTextSizeMultiplier) &&
+    display.aboveTextSizeMultiplier > 0
+      ? display.aboveTextSizeMultiplier
+      : 0.5;
+
+  valueEl.textContent = display.code;
+  valueEl.style.fontSize = `${display.fontSize}px`;
+  valueEl.style.lineHeight = `${display.fontSize * 2}px`;
+
   innerEl.style.fontFamily = display.fontFamily;
   innerEl.style.color = display.color;
+  // Reset width so the promo code can be measured without wrap constraints.
+  innerEl.style.width = '';
+  aboveEl.style.maxWidth = '';
+
+  const codeWidth = Math.max(valueEl.offsetWidth, 1);
+
+  if (aboveText) {
+    aboveEl.hidden = false;
+    aboveEl.textContent = aboveText;
+    aboveEl.style.fontSize = `${display.fontSize * multiplier}px`;
+    aboveEl.style.textAlign = display.aboveTextAlign ?? 'left';
+    aboveEl.style.marginBottom = `${display.aboveTextMarginBottom ?? 0}px`;
+    // Caption wraps within the promo-code width inside code-text-inner.
+    aboveEl.style.maxWidth = `${codeWidth}px`;
+    innerEl.style.width = `${codeWidth}px`;
+  } else {
+    aboveEl.hidden = true;
+    aboveEl.textContent = '';
+    aboveEl.style.fontSize = '';
+    aboveEl.style.textAlign = '';
+    aboveEl.style.marginBottom = '';
+  }
 
   const strokeWidth = Number(display.strokeWidth) || 0;
   if (strokeWidth > 0) {
@@ -177,8 +209,23 @@ const hideDisplay = (): void => {
   if (layerEl) {
     layerEl.hidden = true;
   }
+  if (aboveEl) {
+    aboveEl.hidden = true;
+    aboveEl.textContent = '';
+    aboveEl.style.fontSize = '';
+    aboveEl.style.maxWidth = '';
+    aboveEl.style.textAlign = '';
+    aboveEl.style.marginBottom = '';
+  }
+  if (valueEl) {
+    valueEl.textContent = '';
+    valueEl.style.fontSize = '';
+    valueEl.style.lineHeight = '';
+  }
   if (innerEl) {
-    innerEl.textContent = '';
+    innerEl.style.width = '';
+    innerEl.style.webkitTextStroke = '';
+    innerEl.dataset.stroke = 'off';
   }
   if (textEl) {
     textEl.style.width = '';

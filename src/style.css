@@ -23,12 +23,30 @@ body {
   position: absolute;
   left: 50%;
   top: 50%;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
   font-weight: 700;
-  line-height: 2;
-  white-space: nowrap;
+  line-height: 1.2;
   user-select: none;
   text-shadow: none;
   transform-origin: center center;
+}
+
+.code-above-text {
+  display: block;
+  width: 100%;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.2;
+}
+
+.code-value {
+  display: block;
+  white-space: nowrap;
+  line-height: 2;
 }
 
 .code-text-inner[data-stroke='on'] {

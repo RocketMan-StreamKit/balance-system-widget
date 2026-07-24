@@ -311,6 +311,149 @@ const buildWidgetSchema = (showCreditHint: boolean): AddonConfigSchema => {
       },
     ],
     {
+      key: 'code_above_text',
+      type: 'text',
+      default: '',
+      editor: {
+        label: {
+          en: 'Text above promo code',
+          ru: 'Текст над промокодом',
+          uk: 'Текст над промокодом',
+        },
+        description: {
+          en: 'Shown above the promo code when set. Leave empty to hide.',
+          ru: 'Выводится над промокодом, если указан. Оставьте пустым, чтобы скрыть.',
+          uk: 'Виводиться над промокодом, якщо вказано. Залиште порожнім, щоб приховати.',
+        },
+      },
+    },
+    {
+      key: 'code_above_text_size',
+      type: 'select',
+      default: '0.5',
+      options: [
+        {
+          value: '0.333',
+          label: {
+            en: '3× smaller than promo code font',
+            ru: 'В 3 раза меньше размера шрифта промокода',
+            uk: 'У 3 рази менше розміру шрифту промокоду',
+          },
+        },
+        {
+          value: '0.5',
+          label: {
+            en: '2× smaller than promo code font',
+            ru: 'В 2 раза меньше размера шрифта промокода',
+            uk: 'У 2 рази менше розміру шрифту промокоду',
+          },
+        },
+        {
+          value: '0.667',
+          label: {
+            en: '1.5× smaller than promo code font',
+            ru: 'В 1.5 раза меньше размера шрифта промокода',
+            uk: 'У 1.5 раза менше розміру шрифту промокоду',
+          },
+        },
+        {
+          value: '1',
+          label: {
+            en: 'Same as promo code font size',
+            ru: 'Как размер шрифта промокода',
+            uk: 'Як розмір шрифту промокоду',
+          },
+        },
+        {
+          value: '1.5',
+          label: {
+            en: '1.5× larger than promo code font',
+            ru: 'В 1.5 раза больше размера шрифта промокода',
+            uk: 'У 1.5 раза більше розміру шрифту промокоду',
+          },
+        },
+        {
+          value: '2',
+          label: {
+            en: '2× larger than promo code font',
+            ru: 'В 2 раза больше размера шрифта промокода',
+            uk: 'У 2 рази більше розміру шрифту промокоду',
+          },
+        },
+        {
+          value: '3',
+          label: {
+            en: '3× larger than promo code font',
+            ru: 'В 3 раза больше размера шрифта промокода',
+            uk: 'У 3 рази більше розміру шрифту промокоду',
+          },
+        },
+      ],
+      editor: {
+        label: {
+          en: 'Above-text font size',
+          ru: 'Размер шрифта текста над промокодом',
+          uk: 'Розмір шрифту тексту над промокодом',
+        },
+      },
+    },
+    {
+      key: 'code_above_text_align',
+      type: 'select',
+      default: 'left',
+      options: [
+        {
+          value: 'left',
+          label: {
+            en: 'Left',
+            ru: 'По левому краю',
+            uk: 'По лівому краю',
+          },
+        },
+        {
+          value: 'center',
+          label: {
+            en: 'Center',
+            ru: 'По центру',
+            uk: 'По центру',
+          },
+        },
+        {
+          value: 'right',
+          label: {
+            en: 'Right',
+            ru: 'По правому краю',
+            uk: 'По правому краю',
+          },
+        },
+      ],
+      editor: {
+        label: {
+          en: 'Above-text alignment',
+          ru: 'Выравнивание текста над промокодом',
+          uk: 'Вирівнювання тексту над промокодом',
+        },
+      },
+    },
+    {
+      key: 'code_above_text_margin',
+      type: 'number',
+      default: 0,
+      editor: {
+        label: {
+          en: 'Above-text bottom margin (px)',
+          ru: 'Отступ снизу текста над промокодом (px)',
+          uk: 'Відступ знизу тексту над промокодом (px)',
+        },
+        description: {
+          en: 'CSS margin-bottom between the caption and the promo code.',
+          ru: 'CSS margin-bottom между текстом и промокодом.',
+          uk: 'CSS margin-bottom між текстом і промокодом.',
+        },
+        validation: { min: -100, max: 100 },
+      },
+    },
+    {
       key: 'reward_section',
       type: 'info',
       editor: {

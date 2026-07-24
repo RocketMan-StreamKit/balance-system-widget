@@ -3,6 +3,7 @@ import type {
   CodeDisplayStyle,
   DisplayPayload,
   RewardRounding,
+  TextAlign,
   TextAnchor,
   WidgetParams,
 } from './types';
@@ -127,6 +128,54 @@ const resolveFontFamily = (params: WidgetParams): string => {
 };
 
 /**
+ * Parses the above-text font-size multiplier from settings.
+ * Falls back to `0.5` (half the promo-code size) when missing or invalid.
+ * @param params - Widget settings.
+ * @returns Positive multiplier relative to promo-code font size.
+ * @example
+ * resolveAboveTextSizeMultiplier({ code_above_text_size: '0.5' }); // 0.5
+ */
+const resolveAboveTextSizeMultiplier = (params: WidgetParams): number => {
+  const parsed = Number(params.code_above_text_size);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return 0.5;
+  }
+  return parsed;
+};
+
+/**
+ * Resolves horizontal alignment for the above-code caption.
+ * Falls back to `left` when missing or invalid.
+ * @param params - Widget settings.
+ * @returns Text alignment value.
+ * @example
+ * resolveAboveTextAlign({ code_above_text_align: 'center' }); // 'center'
+ */
+const resolveAboveTextAlign = (params: WidgetParams): TextAlign => {
+  const value = String(params.code_above_text_align ?? 'left');
+  if (value === 'center' || value === 'right' || value === 'left') {
+    return value;
+  }
+  return 'left';
+};
+
+/**
+ * Resolves bottom margin (px) for the above-code caption.
+ * Clamped to [-100, 100]; falls back to `0` when missing or invalid.
+ * @param params - Widget settings.
+ * @returns Margin-bottom in pixels.
+ * @example
+ * resolveAboveTextMarginBottom({ code_above_text_margin: 12 }); // 12
+ */
+const resolveAboveTextMarginBottom = (params: WidgetParams): number => {
+  const parsed = Number(params.code_above_text_margin);
+  if (!Number.isFinite(parsed)) {
+    return 0;
+  }
+  return Math.max(-100, Math.min(100, parsed));
+};
+
+/**
  * Resolves text anchor from screen quadrant (50% split on each axis).
  * @param x - Horizontal position (%).
  * @param y - Vertical position (%).
@@ -201,6 +250,10 @@ const buildDisplayStyle = (
 
   return {
     code,
+    aboveText: String(params.code_above_text ?? '').trim(),
+    aboveTextSizeMultiplier: resolveAboveTextSizeMultiplier(params),
+    aboveTextAlign: resolveAboveTextAlign(params),
+    aboveTextMarginBottom: resolveAboveTextMarginBottom(params),
     x,
     y,
     anchor,
